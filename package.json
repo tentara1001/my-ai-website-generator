@@ -1,0 +1,10 @@
+{
+  "name": "instant-site-ai-serverless",
+  "version": "1.0.0",
+  "description": "Serverless backend for Instant Site AI",
+  "private": true,
+  "dependencies": {
+    "@google/genai": "^1.8.0",
+    "@netlify/functions": "^2.6.3"
+  }
+}

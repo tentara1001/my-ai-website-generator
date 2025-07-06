@@ -1,0 +1,82 @@
+import { GoogleGenAI } from "@google/genai";
+import type { WebsiteTemplate } from '../types';
+import type { Handler, HandlerEvent } from "@netlify/functions";
+
+// This is the serverless function handler that runs on Netlify's backend.
+const handler: Handler = async (event: HandlerEvent) => {
+  // Only allow POST requests
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ error: 'Method Not Allowed' }),
+    };
+  }
+
+  // Ensure the API key is set in Netlify's environment variables
+  if (!process.env.API_KEY) {
+    console.error("API_KEY environment variable not set in Netlify.");
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Server configuration error: API key is missing.' }),
+    };
+  }
+
+  try {
+    const body = JSON.parse(event.body || '{}');
+    const userPrompt = body.prompt;
+
+    if (!userPrompt) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Prompt is required in the request body.' }),
+      };
+    }
+    
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+    const systemInstruction = `You are an expert web designer and UI/UX strategist. Your task is to generate three distinct website template ideas based on a user's prompt. For each template, you must provide a unique name, a brief description, a 5-color palette (as an array of hex codes), a suggested font pairing (one for headings, one for body text from Google Fonts), a list of 5-7 essential page sections, and a descriptive prompt for a hero image suitable for an image generation AI. You MUST return the output as a valid JSON array of objects, where each object matches the WebsiteTemplate interface. Do not include any explanation, introduction, or markdown formatting like \`\`\`json.`;
+    const model = 'gemini-2.5-flash-preview-04-17';
+    
+    const response = await ai.models.generateContent({
+        model: model,
+        contents: userPrompt,
+        config: {
+            systemInstruction: systemInstruction,
+            responseMimeType: "application/json",
+            temperature: 0.8,
+            topP: 0.9,
+        }
+    });
+
+    // The response text should be a JSON string because of responseMimeType.
+    let jsonStr = response.text.trim();
+    
+    // Defensive check: sometimes the API might wrap the JSON in markdown fences.
+    const fenceRegex = /^```(\w*)?\s*\n?(.*?)\n?\s*```$/s;
+    const match = jsonStr.match(fenceRegex);
+    if (match && match[2]) {
+        jsonStr = match[2].trim();
+    }
+    
+    // Validate that the string is valid JSON before sending it back.
+    JSON.parse(jsonStr);
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonStr, // Send the validated JSON string as the response body
+    };
+
+  } catch (error) {
+    console.error("Error in serverless function:", error);
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: `Internal Server Error: ${errorMessage}` }),
+    };
+  }
+};
+
+export { handler };

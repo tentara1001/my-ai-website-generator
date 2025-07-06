@@ -1,0 +1,55 @@
+import React from 'react';
+import { WebsiteTemplate } from '../types';
+
+interface TemplateCardProps {
+  template: WebsiteTemplate;
+}
+
+const TemplateCard: React.FC<TemplateCardProps> = ({ template }) => {
+  const { templateName, description, colorPalette, fontPairing, sections, heroImagePrompt } = template;
+  const heroImageUrl = `https://picsum.photos/seed/${encodeURIComponent(heroImagePrompt)}/600/400`;
+
+  return (
+    <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl shadow-2xl overflow-hidden transform hover:scale-[1.02] transition-transform duration-300 ease-in-out">
+      <div className="relative">
+        <img src={heroImageUrl} alt={heroImagePrompt} className="w-full h-48 object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-800/80 to-transparent"></div>
+        <div className="absolute bottom-0 left-0 p-4">
+          <h3 className="text-2xl font-bold text-white" style={{ fontFamily: `'${fontPairing.heading}', sans-serif` }}>{templateName}</h3>
+        </div>
+      </div>
+
+      <div className="p-6 space-y-6">
+        <p className="text-gray-300 text-sm" style={{ fontFamily: `'${fontPairing.body}', sans-serif` }}>{description}</p>
+        
+        <div>
+          <h4 className="font-semibold text-gray-200 mb-2">Color Palette</h4>
+          <div className="flex space-x-2">
+            {colorPalette.map((color, index) => (
+              <div key={index} className="w-8 h-8 rounded-full border-2 border-gray-600 shadow-md" style={{ backgroundColor: color }} title={color}></div>
+            ))}
+          </div>
+        </div>
+        
+        <div>
+           <h4 className="font-semibold text-gray-200 mb-2">Font Pairing</h4>
+           <div className="flex items-baseline space-x-4 text-gray-300">
+             <p><span className="font-bold text-gray-400">Headings:</span> {fontPairing.heading}</p>
+             <p><span className="font-bold text-gray-400">Body:</span> {fontPairing.body}</p>
+           </div>
+        </div>
+
+        <div>
+          <h4 className="font-semibold text-gray-200 mb-2">Suggested Sections</h4>
+          <div className="flex flex-wrap gap-2">
+            {sections.map((section, index) => (
+              <span key={index} className="px-3 py-1 text-xs font-medium text-violet-200 bg-violet-900/50 rounded-full">{section}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TemplateCard;
